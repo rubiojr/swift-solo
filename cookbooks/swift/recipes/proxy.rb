@@ -154,7 +154,7 @@ template "/root/test-swift" do
   source "test-swift.erb"
   mode "0755"
   variables( {
-       :localip =>       storage_ip,
+       :localip =>       public_ip,
   })  
 end
 
