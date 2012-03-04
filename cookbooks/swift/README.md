@@ -1,1 +1,1 @@
-See the README in the root directory
+See the README in the top directory
