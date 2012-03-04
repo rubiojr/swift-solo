@@ -1,0 +1,69 @@
+[DEFAULT]
+#cert_file = /etc/swift/cert.crt
+#key_file = /etc/swift/cert.key
+bind_port = 8080
+# 2x number of CPUs according to swift performance docs
+workers = 8 
+user = swift
+
+log_facility = LOG_LOCAL0
+log_level = INFO
+log_name = swift-p
+log_requests = true
+setup_console_handler = true
+
+[pipeline:main]
+pipeline = swift3 catch_errors healthcheck cache swauth proxy-server
+
+[app:proxy-server]
+use = egg:swift#proxy
+allow_account_management = true
+account_autocreate = true # create accounts for users authorized elsewhere
+set log_name = proxy-server
+set log_facility = LOG_LOCAL0
+set log_level = INFO
+set access_log_name = proxy-server
+set access_log_facility = LOG_LOCAL0
+set access_log_level = INFO
+set log_requests = true
+
+[filter:swift3]
+use = egg:swift#swift3
+
+[filter:catch_errors]
+use = egg:swift#catch_errors
+
+[filter:tempauth]
+use = egg:swift#tempauth
+set log_name = proxy-t
+user_admin_admin = b00b13s .admin .reseller_admin
+user_test_tester = testing .admin https://voxfiles.net:8080/v1/AUTH_test
+user_slog_slogger = slog_maniac .admin https://voxfiles.net:8080/v1/AUTH_test
+user_gett_gett = first__one .admin https://voxfiles.net:8080/v1/AUTH_gett
+user_imagebeam_imagebeam = something++else .admin https://voxfiles.net:8080/v1/AUTH_imagebeam
+user_jwb_jwb = something++purple .admin https://voxfiles.net:8080/v1/AUTH_jwb
+#user_imagebeam_imagebeam = second_one .admin .reseller_admin https://74.63.35.11:8080/v1/AUTH_system
+user_test2_tester2 = testing2 .admin
+user_test_tester3 = testing3
+user_bench_bencher = bench .admin
+user_disp_disper = disp .admin
+#user_system_root = testpass .admin https://$PROXY_LOCAL_NET_IP:8080/v1/AUTH_system
+user_system_root = testpass .admin https://107.6.80.16:8080/v1/AUTH_system
+user_hilton_hilton = perezky .admin https://voxfiles.net:8080/v1/AUTH_imagebeam
+allowed_sync_hosts = voxfiles.net,127.0.0.1,107.6.80.68,107.6.80.69,107.6.80.70,107.6.80.71,107.6.80.72,172.16.60.10,172.16.60.13,172.16.60.40,172.16.60.41,172.16.60.42,172.16.60.43,172.16.60.6,172.16.60.7,172.20.70.4,172.20.70.5,172.20.70.6,172.20.70.7,172.20.70.8,74.63.35.10,74.63.35.13,74.63.35.40,74.63.35.41,74.63.35.42,74.63.35.43,74.63.35.6,74.63.35.7
+
+[filter:swauth]
+use = egg:swauth#swauth
+set default_swift_cluster = local#https://voxfiles.net/v1#http://127.0.0.1:8080/v1
+set log_name = swauth
+super_admin_key = swauth__voxell
+allowed_sync_hosts = voxfiles.net,127.0.0.1,107.6.80.68,107.6.80.69,107.6.80.70,107.6.80.71,107.6.80.72,172.16.60.10,172.16.60.13,172.16.60.40,172.16.60.41,172.16.60.42,172.16.60.43,172.16.60.6,172.16.60.7,172.20.70.4,172.20.70.5,172.20.70.6,172.20.70.7,172.20.70.8,74.63.35.10,74.63.35.13,74.63.35.40,74.63.35.41,74.63.35.42,74.63.35.43,74.63.35.6,74.63.35.7
+
+[filter:healthcheck]
+use = egg:swift#healthcheck
+
+[filter:cache]
+use = egg:swift#memcache
+memcache_servers = 107.6.80.72:11211,74.63.35.13:11211,107.6.80.68:11211,74.63.35.10:11211,74.63.35.6:11211,107.6.80.69:11211
+
+

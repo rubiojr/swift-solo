@@ -1,0 +1,44 @@
+
+[log-processor]
+swift_account = <%= @swift_account %>
+user = <%= @swift_user %>
+set log_level = DEBUG
+set log_name = slog-proc
+
+[log-processor-access]
+set log_level = DEBUG
+set log_name = slog-access
+swift_account = <%= @swift_account %>
+container_name = log_data
+log_dir = /var/log/swift/hourly/
+source_filename_pattern = ^
+    (?P<year>[0-9]{4})
+    (?P<month>[0-1][0-9])
+    (?P<day>[0-3][0-9])
+    (?P<hour>[0-2][0-9])
+    .*$
+class_path = slogging.access_processor.AccessLogProcessor
+user = <%= @os_user %>
+
+[log-processor-stats]
+set log_level = DEBUG
+set log_name = slog-stats
+swift_account = <%= @swift_account %>
+container_name = account_stats
+log_dir = /var/log/swift/stats/
+class_path = slogging.stats_processor.StatsLogProcessor
+devices = /srv/node/
+mount_check = false
+user = <%= @os_user %>
+
+[log-processor-container-stats]
+set log_level = DEBUG
+set log_name = slog-c-stats
+swift_account = <%= @swift_account %>
+container_name = container_stats
+log_dir = /var/log/swift/stats/
+class_path = slogging.stats_processor.StatsLogProcessor
+processable = false
+devices = /srv/node/
+mount_check = false
+user =  <%= @os_user %>

@@ -1,0 +1,32 @@
+[DEFAULT]
+bind_ip = <%= @storage_net_ip %>
+bind_port = 6002
+workers = <%= @workers %>
+devices = /srv/node
+mount_check =  false
+
+log_facility = LOG_LOCAL1
+log_level = <%= @log_level %>
+log_name = swift-a
+log_requests = true
+setup_console_handler = true
+
+
+[pipeline:main]
+pipeline =  account-server 
+
+[app:account-server]
+use = egg:swift#account
+set log_level = <%= @log_level %>
+
+
+[account-replicator]
+#concurrency = 2 #conflicting suggestions here.  Needs more invesigation.
+
+[account-auditor]
+#interval  = 1800  #Minimum time for a pass to take
+
+[account-reaper]
+#concurrency = 1 #conflicting suggestions here.  Needs more invesigation.
+
+

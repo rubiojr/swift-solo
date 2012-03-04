@@ -1,0 +1,44 @@
+uid = <%= @uid %>
+gid = <%= @gid %> 
+log file = /var/log/rsyncd.log
+pid file = /var/run/rsyncd.pid
+
+address =  <%= @storage_net_ip %>
+
+<% if @proxy_role %>
+[proxy-rings]
+max connections = 25
+path = /etc/swift/
+read only = true
+lock file = /var/lock/swift/proxy-rings.lock
+exclude = *
+include = account.ring.gz object.ring.gz container.ring.gz
+<% end %>
+
+<% if @storage_role %>
+# START if it has role[swift-storage] apply the following section
+[account]
+max connections = 25
+path = /srv/node/
+read only = false
+lock file = /var/lock/swift/account.lock
+
+[container]
+max connections = 25
+path = /srv/node/
+read only = false
+lock file = /var/lock/swift/container.lock
+[object]
+max connections = 25
+path = /srv/node/
+read only = false
+lock file = /var/lock/swift/object.lock
+# END if it has role[swift-storage] apply the following section
+<% else %>
+
+[ring]
+max connections = 100
+path = /etc/swift
+read only = false
+lock file = /var/lock/swift/ring.lock
+<% end %>

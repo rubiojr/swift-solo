@@ -1,0 +1,11 @@
+#!/bin/bash
+
+for s in proxy object container account; do
+  service swift-$s stop > /dev/null 2>&1
+done
+#find /var/log/swift -type f -exec rm -f {} \;
+umount /srv/node/sdb1
+rm -f /srv/swift-disk
+rm -rf /srv/node
+rm -rf /etc/swift/*
+

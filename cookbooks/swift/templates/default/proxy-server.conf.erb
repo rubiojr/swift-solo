@@ -1,0 +1,37 @@
+[DEFAULT]
+#cert_file = /etc/swift/cert.crt
+#key_file = /etc/swift/cert.key
+bind_ip = <%= @localip %>
+bind_port = 8080
+# 2x number of CPUs according to swift performance docs
+workers = <%= @workers %> 
+user = <%= @user %>
+
+[pipeline:main]
+pipeline = swift3 catch_errors healthcheck cache tempauth proxy-server
+
+[app:proxy-server]
+use = egg:swift#proxy
+allow_account_management = true
+account_autocreate = true 
+
+[filter:tempauth]
+use = egg:swift#tempauth
+user_admin_admin = <%= node[:swift][:proxy_admin_password] %> .admin .reseller_admin
+
+
+[filter:swift3]
+use = egg:swift#swift3
+
+[filter:catch_errors]
+use = egg:swift#catch_errors
+
+
+[filter:healthcheck]
+use = egg:swift#healthcheck
+
+[filter:cache]
+use = egg:swift#memcache
+memcache_servers = <%= @memcached_ips %>
+
+

@@ -1,0 +1,7 @@
+{ 
+    "run_list": ["role[swift-proxy]", "role[swift-storage]"],
+    "swift": { 
+        "admin_ip_expr": "get_ip_by_interface(node,'eth1')",
+        "storage_ip_expr": "get_ip_by_interface(node,'eth1')"
+    }
+}

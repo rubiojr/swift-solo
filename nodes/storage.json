@@ -1,0 +1,7 @@
+{ 
+    "run_list": ["role[swift-storage]"],
+    "swift": { 
+        "ring_builder_ip": "127.0.0.1",
+        "storage_ip_expr": "get_ip_by_interface(node,'eth0')"
+    }
+}

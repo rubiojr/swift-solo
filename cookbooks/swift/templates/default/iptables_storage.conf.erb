@@ -1,0 +1,112 @@
+#!/bin/bash
+
+# this is for openstack swift storage servers
+# this is the iptables config for Munin traffic_accounting plugin
+# the traffic accounting plugin monitors TCP ports for throughput
+
+/sbin/iptables -F 
+/sbin/iptables -X ACCT4 
+# TOTAL BETWEEN PROXY and BACKEND
+###############
+HOST=`hostname`
+HOST=${HOST//\./}
+HOST=${HOST//\-/}
+iptables -N ACCT4
+iptables -I INPUT 1 -j ACCT4
+iptables -I OUTPUT 1 -j ACCT4
+
+# all world <-> localhost traffic
+iptables -A ACCT4 -p tcp -s 0/0 -m comment --comment "=${HOST}=All traffic to/from this storage node"
+
+# BYTES TO/FROM ALL BACKENDS 
+P0="6000"; P1="6001"; P2="6002"; R1="873"
+for PORT in $P0 $P1 $P2 $R1 
+do
+  iptables -A ACCT4 -p tcp --sport ${PORT} -m comment --comment "=${HOST}allbackend_down=Combined Storage traffic to/from ${HOST}"
+  iptables -A ACCT5 -p tcp --dport ${PORT} -m comment --comment "=${HOST}allbackend_up=Combined Storage traffic to/from ${HOST}"
+done
+
+# proxy <-> this storage node traffic
+for P in <%= @proxy_nodes_ips %>
+do
+  Px=${P//\./}
+  # all proxy nodes
+  iptables -A ACCT4 -p tcp -s ${P} -m comment --comment "=${HOST}allproxy_down=Combined proxy traffic to/from this Storage"
+  iptables -A ACCT4 -p tcp -d ${P} -m comment --comment "=${HOST}allproxy_up=Combined proxy traffic to/from this Storage"
+  # each proxy node
+  iptables -A ACCT4 -p tcp -s ${P} -m comment --comment "=${HOST}${Px}eachproxy_down=${P} proxy to/from this Storage"
+  iptables -A ACCT4 -p tcp -d ${P} -m comment --comment "=${HOST}${Px}eachproxy_up=${P} proxy to/from this Storage"
+
+  for PORT in $P0 $P1 $P2 $R1 
+  do
+    # each destination port, all proxies
+    iptables -A ACCT4 -p tcp -s ${P} --dport ${PORT} -m comment --comment "=${HOST}${PORT}eachportallproxy_down=from all proxies to/from Port ${PORT} on this Storage node"
+    iptables -A ACCT4 -p tcp -d ${P} --sport ${PORT} -m comment --comment "=${HOST}${PORT}eachportallproxy_up=from all proxies to/from Port ${PORT} on this Storage node"
+
+    # each destination port, each proxy
+    iptables -A ACCT4 -p tcp -s ${P} --dport ${PORT} -m comment --comment "=${HOST}${PORT}${Px}eachporteachproxy_down=from Proxy ${P} to/from Port ${PORT} on this Storage node"
+    iptables -A ACCT4 -p tcp -d ${P} --sport ${PORT} -m comment --comment "=${HOST}${PORT}${Px}eachporteachproxy_up=from Proxy ${P} to/from Port ${PORT} on this Storage node"
+
+  done
+done
+
+
+
+# all servers, particular backends
+iptables -A ACCT4 -p tcp --dport ${P0} -m comment --comment "=${HOST}allobjectbackends_up=Object (${P0}) server traffic to/from ${HOST}"
+iptables -A ACCT4 -p tcp --sport ${P0} -m comment --comment "=${HOST}allobjectbackends_down=Object (${P0}) server traffic to/from ${HOST}"
+
+iptables -A ACCT4 -p tcp --dport ${P1} -m comment --comment "=${HOST}allcontainerbackends_up=Container (${P1}) server traffic to/from ${HOST}"
+iptables -A ACCT4 -p tcp --sport ${P1} -m comment --comment "=${HOST}allcontainerbackends_down=Container (${P1}) server traffic to/from ${HOST}"
+ 
+iptables -A ACCT4 -p tcp --dport ${P2} -m comment --comment "=${HOST}allaccountbackends_up=Account (${P2}) server traffic to/from ${HOST}"
+iptables -A ACCT4 -p tcp --sport ${P2} -m comment --comment "=${HOST}allaccountbackends_down=Account (${P2}) server traffic to/from ${HOST}"
+ 
+iptables -A ACCT4 -p tcp --dport ${R1} -m comment --comment "=${HOST}allrsyncbackends_up=rsync (${R1}) server traffic to/from ${HOST}"
+iptables -A ACCT4 -p tcp --sport ${R1} -m comment --comment "=${HOST}allrsyncbackends_down=rsync (${R1}) server traffic to/from ${HOST}"
+
+for S in <%= @storage_nodes_ips %>
+do
+Sx=${S//[^0-9]/}
+
+	iptables -A ACCT4 -p tcp -d ${S} --dport ${P0} -m comment --comment "=${HOST}${Sx}objectbackends_up=object (${P0}) server traffic ${HOST} <-> ${S}"
+	iptables -A ACCT4 -p tcp -s ${S} --dport ${P0} -m comment --comment "=${HOST}${Sx}objectbackends_down=object (${P0}) server traffic ${HOST} <-> ${S}"
+                                                       
+	iptables -A ACCT4 -p tcp -d ${S} --dport ${P1} -m comment --comment "=${HOST}${Sx}containerbackends_up=container (${P1}) server traffic ${HOST} <-> ${S}"
+	iptables -A ACCT4 -p tcp -s ${S} --dport ${P1} -m comment --comment "=${HOST}${Sx}containerbackends_down=container (${P1}) server traffic ${HOST} <-> ${S}"
+                                                       
+	iptables -A ACCT4 -p tcp -d ${S} --dport ${P2} -m comment --comment "=${HOST}${Sx}accountbackends_up=account (${P2}) server traffic ${HOST} <-> ${S}"
+	iptables -A ACCT4 -p tcp -s ${S} --dport ${P2} -m comment --comment "=${HOST}${Sx}accountbackends_down=account (${P2}) server traffic ${HOST} <-> ${S}"
+                                                       
+	iptables -A ACCT4 -p tcp -d ${S} --dport ${R1} -m comment --comment "=${HOST}${Sx}rsyncbackends_up=rsync (${R1}) server traffic ${HOST} <-> ${S}"
+	iptables -A ACCT4 -p tcp -s ${S} --dport ${R1} -m comment --comment "=${HOST}${Sx}rsyncbackends_down=rsync (${R1}) server traffic ${HOST} <-> ${S}"
+done
+
+
+# each server, all backends
+# ports by hosts
+ 
+
+#/sbin/iptables -A ACCT4 -i eth0 -p tcp --dport 8080 -m state --state ESTABLISHED,NEW 
+### save them (redhat and friends only) ###
+# /sbin/service iptables save
+
+
+#To view stats, enter:
+# iptables -L OUT -v -n
+# iptables -L IN -v -n
+
+#How Do I View Exact Value Of the Packet and Byte Counters?
+
+#Use the -x option:
+# iptables -L {Chain-Name-Here} -x
+# iptables -L IN -v -x
+# iptables -L IN -v -x -n
+
+#How Do Delete Packet and Byte Counters?
+
+#Use the -Z option:
+# iptables -L {CHAIN-NAME-HERE} -Z
+# iptables -L IN -Z
+#Verify the same, enter:
+# iptables -L IN -vnx

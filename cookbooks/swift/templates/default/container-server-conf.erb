@@ -1,0 +1,44 @@
+[DEFAULT]
+bind_ip = <%= @storage_net_ip %>
+bind_port = 6001
+workers = <%= @workers %>
+devices = /srv/node
+mount_check =  false
+
+
+log_facility = LOG_LOCAL0
+log_level = INFO
+log_name = swift-c
+log_requests = true
+setup_console_handler = true
+
+[pipeline:main]
+pipeline =  container-server 
+
+[app:container-server]
+use = egg:swift#container
+log_level = <%= @log_level %>
+
+[container-replicator]
+log_level = <%= @log_level %>
+concurrency = 8
+
+[container-updater]
+log_level = <%= @log_level %>
+concurrency = 4
+
+[container-auditor]
+log_level = <%= @log_level %>
+#interval  = 1800  #Minimum time for a pass to take
+
+
+[container-sync]
+# You can override the default log routing for this app here (don't
+# use set!):
+log_name = c-sync
+log_facility = LOG_LOCAL0
+log_level = INFO
+# Will sync, at most, each container once per interval
+interval = 30
+# Maximum amountkbu of time to spend syncing each container
+container_time = 60

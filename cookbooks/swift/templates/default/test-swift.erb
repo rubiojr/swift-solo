@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+require 'fog'
+require 'fog/rackspace/storage'
+
+NODE="<%= @localip %>"
+
+connection = Fog::Storage.new({
+    :provider                => 'Rackspace',
+    :rackspace_username      => 'admin:admin',
+    :rackspace_api_key       => 'admin',
+    :rackspace_auth_url      => "http://#{NODE}:8080/auth/v1.0"
+})
+
+connection.directories.each do |d|
+end
+
+connection.directories.create :key => 'stuff'
+connection.directories.first.files.create :key => 'stuff',
+                                          :body => File.open('test-swift')
+
+puts "OK"
+                                          

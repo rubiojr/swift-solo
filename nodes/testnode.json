@@ -1,0 +1,14 @@
+{ 
+    "run_list": ["role[swift-testnode]"],
+    "swift": { 
+        "admin_ip_expr": "get_ip_by_interface(node,'eth0')",
+        "storage_ip_expr": "get_ip_by_interface(node,'eth0')",
+        "storage_nodes": {
+            "127.0.0.1": {
+                "zone": "1",
+                "dev": "sdb1",
+                "weight": "1"
+            }
+        }
+    }
+}

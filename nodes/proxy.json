@@ -1,0 +1,10 @@
+{ 
+    "run_list": ["role[swift-proxy]"],
+    "swift": { 
+        "proxy_admin_password": "admin",
+        "admin_ip_expr": "get_ip_by_interface(node,'eth0')",
+        "storage_ip_expr": "get_ip_by_interface(node,'eth0')",
+        "ring_builder_ip": "127.0.0.1"
+    }
+}
+

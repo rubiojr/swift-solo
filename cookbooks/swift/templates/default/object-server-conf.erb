@@ -1,0 +1,53 @@
+[DEFAULT]
+bind_ip = <%= @storage_net_ip %>
+bind_port = 6000
+workers = <%= @workers %>
+devices = /srv/node
+mount_check =  false
+
+log_facility = LOG_LOCAL0
+log_level = <%= @log_level %>
+log_name = swift-o
+log_requests = true
+setup_console_handler = true
+
+[pipeline:main]
+pipeline =  recon object-server 
+
+[filter:recon]
+use = egg:swift#recon
+recon_cache_path = /var/cache/swift
+
+[app:object-server]
+use = egg:swift#object
+set log_level = <%= @log_level %>
+set log_requests = true
+
+#node_timeout  = 3   #Request timeout to external services
+#conn_timeout =  0.5   #Connection timeout to external services
+#network_chunk_size  = 65536 #  Size of chunks to read/write over the network
+#disk_chunk_size   = 65536   #Size of chunks to read/write to disk
+#max_upload_time   = 86400   #Maximum time allowed to upload an object
+#slow  = 0 #  If > 0, Minimum time in seconds for a PUT or DELETE request to complete
+
+[object-replicator]
+concurrency = 2
+recon_enable = yes
+recon_cache_path = /var/cache/swift
+#run_pause   = 30  #Time in seconds to wait between replication passes
+#concurrency   = 1   #Number of replication workers to spawn
+#timeout   = 5   #Timeout value sent to rsync –timeout and –contimeout options
+#stats_interval  = 3600  #Interval in seconds between logging replication statistics
+#reclaim_age   = 604800  #Time elapsed in seconds before an object can be reclaimed
+
+[object-updater]
+#interval  = 300   #Minimum time for a pass to take
+#concurrency   = 1   #Number of updater workers to spawn
+#node_timeout  = 10  #Request timeout to external services
+#conn_timeout  = 0#.5   Connection timeout to external services
+#slowdown  = 0#.01  Time in seconds to wait between objects
+
+[object-auditor]
+#log_time  = 3600  #Frequency of status logs in seconds.
+#files_per_second  = 20  #Maximum files audited per second. Should be tuned according to individual system specs. 0 is unlimited.
+#bytes_per_second  = 10000000  #Maximum bytes audited per second. Should be tuned according to individual system specs. 0 is unlimited.
